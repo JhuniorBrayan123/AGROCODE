@@ -1,7 +1,9 @@
-# Android
+# Android Studio / Gradle
 app-android-kotlin/.gradle/
 app-android-kotlin/build/
+app-android-kotlin/.idea/
 *.iml
+local.properties
 
 # Spring Boot
 webapp-springboot/target/
@@ -14,4 +16,3 @@ webapp-springboot/target/
 # Firebase sensitive
 firebase-config/google-services.json
 firebase-config/firebase-adminsdk.json
-
