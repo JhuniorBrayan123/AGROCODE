@@ -142,7 +142,7 @@ fun RegistroScreen(
                 )
                 
                 Text(
-                    text = "Únete a la experiencia de cuidar tu propio cultivo",
+                    text = "Únete a la experiencia de cuidar tu propio cultivo.",
                     fontSize = 14.sp,
                     color = Color.Gray,
                     textAlign = TextAlign.Center
