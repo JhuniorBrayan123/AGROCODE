@@ -12,7 +12,18 @@ const auth = getAuth(appFirebase);
 
 const Login = () => {
   const [registrando, setRegistrando] = useState(false);
-  const functAutenticacion = async(e) => { }
+  const functAutenticacion = async (e) => {
+    e.preventDefault();
+    const correo = e.target.email.value;
+    const contraseña = e.target.password.value;
+    
+
+    if (registrando) {
+      await createUserWithEmailAndPassword(auth, correo, contraseña)
+    }else {
+      await signInWithEmailAndPassword(auth, correo, contraseña)
+    } 
+  };
 
   return (
     <div className="container">
@@ -21,16 +32,18 @@ const Login = () => {
           <div className="padre">
             <div className="card card-body shadow-lg">
               <img src={ImagenProfile} alt="" className="estilo.profile" />
-              <form>
+              <form onSubmit={functAutenticacion}>
                 <input
                   type="text"
                   placeholder="Ingresar Email"
                   className="cajatexto"
-                 id="email"/>
+                  id="email"
+                />
                 <input
                   type="password"
                   placeholder="Ingresar contraseña"
                   className="cajatexto"
+                  id="password"
                 />
                 <button className="btn-form">
                   {registrando ? "Registrarme" : "Iniciar sesión"}
@@ -40,7 +53,10 @@ const Login = () => {
               <h4 className="texto-registrar">
                 {registrando
                   ? "Si ya tienes cuenta, inicia sesión"
-                  : "¿No tienes cuenta? Regístrate aquí"}<button onClick={()=>setRegistrando(!registrando)}>{registrando ? "Inicia Sesión" : "Registrar"}</button>
+                  : "¿No tienes cuenta? Regístrate aquí"}
+                <button onClick={() => setRegistrando(!registrando)}>
+                  {registrando ? "Inicia Sesión" : "Registrar"}
+                </button>
               </h4>
             </div>
           </div>
