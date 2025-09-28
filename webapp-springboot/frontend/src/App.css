@@ -1,42 +1,42 @@
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+.padre {
+  display: flex;
+  align-items: center;
+  height: 100%;
 }
-
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
+.tamaño-imagen {
+  width: 100%;
+  height: 800px;
+  margin-top: 100px;
 }
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
+.estilos-profile{
+  border-radius: 50%;
+  height: 120px;
+  width: 120px;
+  margin-top: 20px;
+  margin: 0;
+  margin-bottom: 20px;
 }
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+.cajatexto{
+  background-color: #ccccccc4;
+  border-color: slateblue;
+  border-radius: 30px;
+  width: 100%;
+  padding: 15px;
+  border-width: 0px;
+  margin-bottom: 20px;
 }
-
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.cajatexto:focus{
+  outline: 1px solid cornflowerblue;
+  box-shadow: 0 0 10px cornflowerblue;
+  
 }
-
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
-}
-
-.card {
-  padding: 2em;
-}
-
-.read-the-docs {
-  color: #888;
+.btn-form{
+  background-color: #0D6EFD;
+  border-color: slategray;
+  width: 100%;
+  border-radius: 30px;
+  padding: 15px;
+  border-width: 0px;
+  margin-bottom: 20px;
+  color: white;
 }
