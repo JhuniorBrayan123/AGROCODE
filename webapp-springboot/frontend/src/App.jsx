@@ -1,33 +1,34 @@
-import { useState } from 'react'
-//importado firebase
-import appFirebase from "../src/credenciales.js"
-import { getAuth, onAuthStateChanged } from 'firebase/auth'
-const auth = getAuth(appFirebase)
+import { useState, useEffect } from 'react'; // Añadimos useEffect para manejar onAuthStateChanged
+import appFirebase from "../src/credenciales.js";
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import './App.css';
+import Navbar from './components/Navbar'; // Ajusta la ruta si está en otra carpeta
+import Login from '../src/components/Login.jsx';
+import Home from '../src/components/Home.jsx';
 
-import './App.css'
-
-import Login from '../src/components/Login.jsx'
-import Home from '../src/components/Home.jsx' 
+const auth = getAuth(appFirebase);
 
 function App() {
-  const [usuario, setUsuario] = useState(null)
-  onAuthStateChanged(auth, (usuarioFirebase) => {
-    if (usuarioFirebase) {
-      // Usuario ha iniciado sesión
-      setUsuario(usuarioFirebase)
-    }else {
-      // Usuario no ha iniciado sesión
-      setUsuario(null)
-    }
-  })
+  const [usuario, setUsuario] = useState(null);
+
+  useEffect(() => {
+    // useEffect para evitar memory leaks con onAuthStateChanged
+    const unsubscribe = onAuthStateChanged(auth, (usuarioFirebase) => {
+      if (usuarioFirebase) {
+        setUsuario(usuarioFirebase);
+      } else {
+        setUsuario(null);
+      }
+    });
+    return () => unsubscribe(); // Limpia el listener al desmontar
+  }, []);
 
   return (
     <div>
-      {usuario ? <Home correoUsuario = {usuario.email} /> : <Login />}
+      <Navbar usuario={usuario} /> {/* Pasamos el estado del usuario al Navbar */}
+      {usuario ? <Home correoUsuario={usuario.email} /> : <Login />}
     </div>
-  )
-   
-  
+  );
 }
 
-export default App
+export default App;
