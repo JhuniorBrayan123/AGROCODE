@@ -12,41 +12,41 @@ const auth = getAuth(appFirebase);
 
 const Login = () => {
   const [registrando, setRegistrando] = useState(false);
+  const functAutenticacion = async(e) => { }
 
   return (
     <div className="container">
       <div className="row">
-        <div className="col-md-4"></div>
-        <div className="padre">
-          <div className="card-body shadow-lg">
-            <img src={ImagenProfile} alt="" className="estilo.profile" />
-            <form>
-              <input
-                type="text"
-                placeholder="Ingresar Email"
-                className="cajatexto"
-              />
-              <input
-                type="password"
-                placeholder="Ingresar contraseña"
-                className="cajatexto"
-              />
-              <button className="btn-form">
-                {registrando ? "Registrarme" : "Iniciar sesión"}
-              </button>
-            </form>
+        <div className="col-md-4">
+          <div className="padre">
+            <div className="card card-body shadow-lg">
+              <img src={ImagenProfile} alt="" className="estilo.profile" />
+              <form>
+                <input
+                  type="text"
+                  placeholder="Ingresar Email"
+                  className="cajatexto"
+                 id="email"/>
+                <input
+                  type="password"
+                  placeholder="Ingresar contraseña"
+                  className="cajatexto"
+                />
+                <button className="btn-form">
+                  {registrando ? "Registrarme" : "Iniciar sesión"}
+                </button>
+              </form>
 
-            <h4>
-              {registrando
-                ? "Si ya tienes cuenta, inicia sesión"
-                : "¿No tienes cuenta? Regístrate aquí"}
-            </h4>
-
-            <button>{registrando ? "Inicia Sesión" : "Registrar"}</button>
+              <h4 className="texto-registrar">
+                {registrando
+                  ? "Si ya tienes cuenta, inicia sesión"
+                  : "¿No tienes cuenta? Regístrate aquí"}<button onClick={()=>setRegistrando(!registrando)}>{registrando ? "Inicia Sesión" : "Registrar"}</button>
+              </h4>
+            </div>
           </div>
         </div>
 
-        <div className="col-md-4">
+        <div className="col-md-8">
           <img src={Imagen} alt="" className="tamaño-imagen" />
         </div>
       </div>
