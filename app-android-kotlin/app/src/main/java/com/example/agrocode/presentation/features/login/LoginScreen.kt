@@ -169,7 +169,6 @@ fun ContraseñaOlvidada(modifier : Modifier) {
     Text(
         text = "¿Olvidaste tu contraseña?",
         fontSize = 14.sp,color = Color(0xFF85B93D),
-        modifier = modifier.clickable {},
         fontWeight = FontWeight.Bold
     )
 }
