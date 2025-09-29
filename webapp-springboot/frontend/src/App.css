@@ -1,57 +1,140 @@
-.padre {
-  display: flex;
-  align-items: center;
+/* ---------------------------
+   RESET Y CONFIGURACIÓN BASE
+---------------------------- */
+html, body, #root {
+  margin: 0;
+  padding: 0;
   height: 100%;
-}
-.tamaño-imagen {
   width: 100%;
-  height: 800px;
-  margin-top: 100px;
+  overflow: hidden; /* evita scrolls molestos */
 }
+
+/* ---------------------------
+   CONTENEDOR PRINCIPAL
+---------------------------- */
+.container {
+  min-height: 100vh;          /* altura completa */
+  min-width: 100vw;           /* ancho completo */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+
+  /* Fondo dinámico */
+  background-image: var(--bg-image);
+  background-size: cover;       /* 🔥 clave para que cubra toda la pantalla */
+  background-position: center;  /* centra la imagen */
+  background-repeat: no-repeat;
+  transition: background-image 1.5s ease-in-out;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Capa oscura encima del fondo */
+.container::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.55);
+  z-index: 1;
+}
+
+/* ---------------------------
+   FORMULARIO LOGIN
+---------------------------- */
+.login-box {
+  position: relative;
+  z-index: 2;
+  background: rgba(255, 255, 255, 0.92); /* blanco con ligera transparencia */
+  padding: 40px;
+  border-radius: 20px;
+  box-shadow: 0px 8px 25px rgba(0, 0, 0, 0.3);
+  max-width: 380px;
+  width: 100%;
+  text-align: center;
+  animation: fadeIn 0.8s ease-in-out;
+}
+
+/* Animación suave */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ---------------------------
+   INPUTS Y BOTONES
+---------------------------- */
 .estilo-profile {
   border-radius: 50%;
   height: 120px;
   width: 120px;
-  margin-top: 20px;
-  margin: 0 auto;
-  margin-bottom: 20px;
+  margin: 0 auto 25px auto;
+  border: 4px solid #4caf50;
+  object-fit: cover;
+  box-shadow: 0 0 10px rgba(76, 175, 80, 0.3);
 }
+
 .cajatexto {
-  background-color: #ccccccc4;
-  border-color: slateblue;
+  background-color: #f1f8e9;
+  border: 1px solid #a5d6a7;
   border-radius: 30px;
   width: 100%;
-  padding: 15px;
-  border-width: 0px;
+  padding: 14px;
   margin-bottom: 20px;
+  font-size: 1rem;
+  transition: all 0.3s;
 }
+
 .cajatexto:focus {
-  outline: 1px solid cornflowerblue;
-  box-shadow: 0 0 10px cornflowerblue;
+  outline: none;
+  border: 2px solid #4caf50;
+  box-shadow: 0 0 10px rgba(76, 175, 80, 0.8);
 }
+
 .btn-form {
-  background-color: #0d6efd;
-  border-color: slategray;
+  background-color: #4caf50;
   width: 100%;
   border-radius: 30px;
   padding: 15px;
-  border-width: 0px;
+  border: none;
   margin-bottom: 20px;
   color: white;
+  font-size: 1.1rem;
+  font-weight: 600;
+  transition: 0.3s;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(76, 175, 80, 0.4);
 }
+
+.btn-form:hover {
+  background-color: #388e3c;
+  box-shadow: 0 6px 15px rgba(76, 175, 80, 0.6);
+}
+
 .texto-registrar {
-  font-size: 20px;
-  font-family: Arial, Helvetica, sans-serif;
-  margin-top: 5px;
+  font-size: 15px;
+  margin-top: 15px;
+  color: #555;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
+
 .btnswicht {
-  background-color: darkblue;
-  border-radius: 30px;
-  padding: 8px;
-  border-width: 0px;
-  color: white;
-  font-size: 16px;
+  background: none;
+  border: none;
+  color: #4caf50;
+  font-size: 15px;
+  font-weight: bold;
+  cursor: pointer;
+  padding: 0 0 0 5px;
+  transition: color 0.3s;
+  text-decoration: underline;
 }
-.container {
-  background-color: aquamarine;
+
+.btnswicht:hover {
+  color: #388e3c;
+  text-decoration: none;
 }
