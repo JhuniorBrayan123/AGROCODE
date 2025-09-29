@@ -22,7 +22,7 @@ const Login = () => {
       await createUserWithEmailAndPassword(auth, correo, contraseña)
     }else {
       await signInWithEmailAndPassword(auth, correo, contraseña)
-    } 
+    }
   };
 
   return (
