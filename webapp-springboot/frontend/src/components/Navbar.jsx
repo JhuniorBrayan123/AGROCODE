@@ -13,10 +13,10 @@ const Navbar = () => {
         <input type="text" placeholder="Buscar" className="search-input" />
         <a href="/login" className="btn">Iniciar Sesión</a>
         <a href="/register" className="btn">Registrarse</a>
+        <></>
       </div>
     </nav>
   );
 };
 
 export default Navbar;
-

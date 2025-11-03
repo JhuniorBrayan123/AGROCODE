@@ -4,6 +4,10 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
@@ -19,6 +23,7 @@ import com.example.agrocode.presentation.registro.RegistroScreen
 import com.example.agrocode.presentation.theme.AGROCODETheme
 import com.example.agrocode.presentation.theme.WhiteBackground
 import com.example.agrocode.presentation.theme.GreenPrimary
+import com.example.agrocode.presentation.notifications.Notifier
 
 
 
@@ -26,12 +31,23 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        Notifier.createChannel(this)
+        solicitarPermisoNotificaciones()
         setContent {
             AGROCODETheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     val navController = rememberNavController()
                     AppNavHost(controladorNavegacion = navController, modificador = Modifier.padding(innerPadding))
                 }
+            }
+        }
+    }
+
+    private fun solicitarPermisoNotificaciones() {
+        if (android.os.Build.VERSION.SDK_INT >= 33) {
+            val permiso = Manifest.permission.POST_NOTIFICATIONS
+            if (ContextCompat.checkSelfPermission(this, permiso) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this, arrayOf(permiso), 1001)
             }
         }
     }
