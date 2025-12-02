@@ -21,4 +21,10 @@ interface RegistroActividadDao {
 
     @Query("DELETE FROM registro_actividades WHERE cultivoId = :cultivoId")
     suspend fun eliminarActividadesPorCultivo(cultivoId: Int)
+
+    @Query("SELECT * FROM registro_actividades WHERE idUsuario = :idUsuario ORDER BY fecha DESC")
+    fun obtenerTodasActividadesPorUsuario(idUsuario: Int): Flow<List<RegistroActividad>>
+
+    @Query("SELECT * FROM registro_actividades WHERE id = :id")
+    fun obtenerActividadPorId(id: Int): Flow<RegistroActividad?>
 }

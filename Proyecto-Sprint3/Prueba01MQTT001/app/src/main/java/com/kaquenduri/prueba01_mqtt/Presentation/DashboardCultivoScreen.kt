@@ -17,9 +17,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.kaquenduri.prueba01_mqtt.ViewModels.SensorViewModel
+import com.kaquenduri.prueba01_mqtt.ViewModels.CultivoViewModel
 import com.kaquenduri.prueba01_mqtt.models.database.AppDatabase
+import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -311,7 +316,80 @@ fun DashboardCultivoScreen(
                 item {
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "Acciones",
+                        text = "Gestión del Cultivo",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(vertical = 8.dp)
+                    )
+                }
+
+                item {
+                    val cultivoViewModel: CultivoViewModel = viewModel()
+                    val scope = rememberCoroutineScope()
+                    var mostrarDialogoEliminar by remember { mutableStateOf(false) }
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        OutlinedButton(
+                            onClick = { navController.navigate("editarCultivo/$cultivoId") },
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Icon(Icons.Default.Edit, contentDescription = null)
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Editar")
+                        }
+                        OutlinedButton(
+                            onClick = { mostrarDialogoEliminar = true },
+                            modifier = Modifier.weight(1f),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                contentColor = MaterialTheme.colorScheme.error
+                            )
+                        ) {
+                            Icon(Icons.Default.Delete, contentDescription = null)
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Eliminar")
+                        }
+                    }
+
+                    // Diálogo de confirmación de eliminación
+                    if (mostrarDialogoEliminar) {
+                        AlertDialog(
+                            onDismissRequest = { mostrarDialogoEliminar = false },
+                            title = { Text("¿Eliminar cultivo?") },
+                            text = { 
+                                Text("Esta acción eliminará el cultivo y todas sus actividades asociadas. Esta acción no se puede deshacer.") 
+                            },
+                            confirmButton = {
+                                TextButton(
+                                    onClick = {
+                                        scope.launch {
+                                            cultivoViewModel.initRepository(context)
+                                            cultivoViewModel.eliminarCultivo(cultivoId)
+                                            mostrarDialogoEliminar = false
+                                            navController.navigate("listaCultivos") {
+                                                popUpTo("listaCultivos") { inclusive = true }
+                                            }
+                                        }
+                                    }
+                                ) {
+                                    Text("Eliminar", color = MaterialTheme.colorScheme.error)
+                                }
+                            },
+                            dismissButton = {
+                                TextButton(onClick = { mostrarDialogoEliminar = false }) {
+                                    Text("Cancelar")
+                                }
+                            }
+                        )
+                    }
+                }
+
+                item {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Monitoreo y Datos",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(vertical = 8.dp)

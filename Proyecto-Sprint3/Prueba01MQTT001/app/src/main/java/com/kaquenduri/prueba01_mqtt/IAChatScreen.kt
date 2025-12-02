@@ -77,7 +77,7 @@ fun IAChatScreen( onBack: () -> Unit = {} ) {
                     style = MaterialTheme.typography.titleMedium,
                     modifier = Modifier.padding(16.dp)
                 )
-                Divider()
+                HorizontalDivider()
                 LazyColumn(modifier = Modifier.fillMaxHeight()) {
                     items(historial) { entry ->
                         ListItem(

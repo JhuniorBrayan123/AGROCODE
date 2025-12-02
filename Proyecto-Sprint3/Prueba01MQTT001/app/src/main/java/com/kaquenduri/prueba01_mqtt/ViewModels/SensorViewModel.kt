@@ -520,7 +520,7 @@ class SensorViewModel(
 
         simulacionJob = viewModelScope.launch {
             while (isActive) {
-                delay(5000) // Actualizar cada 5 segundos
+                delay(1000) // Actualizar cada 5 segundos
                 
                 // Generar variaciones realistas
                 if ("ph" in sensoresActivos) {

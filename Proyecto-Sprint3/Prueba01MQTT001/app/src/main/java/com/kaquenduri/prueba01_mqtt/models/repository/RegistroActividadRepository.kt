@@ -22,4 +22,12 @@ class RegistroActividadRepository(private val registroActividadDao: RegistroActi
     suspend fun eliminarActividadesPorCultivo(cultivoId: Int) {
         registroActividadDao.eliminarActividadesPorCultivo(cultivoId)
     }
+
+    fun obtenerTodasActividadesPorUsuario(idUsuario: Int): Flow<List<RegistroActividad>> {
+        return registroActividadDao.obtenerTodasActividadesPorUsuario(idUsuario)
+    }
+
+    fun obtenerActividadPorId(id: Int): Flow<RegistroActividad?> {
+        return registroActividadDao.obtenerActividadPorId(id)
+    }
 }

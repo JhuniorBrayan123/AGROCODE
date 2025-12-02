@@ -146,12 +146,25 @@ fun App(navController: NavHostController = rememberNavController()) {
                             scope.launch { drawerState.close() }
                         }
                     )
+                    NavigationDrawerItem(
+                        label = { Text("Todas las Actividades") },
+                        selected = currentDestination == "listaActividadesGlobal",
+                        onClick = {
+                            navController.navigate("listaActividadesGlobal") { launchSingleTop = true }
+                            scope.launch { drawerState.close() }
+                        }
+                    )
+
                 }
             }
         }
     ) {
         Scaffold(
-            topBar = { if (showBars) TopBar(navController, currentDestination) { scope.launch { drawerState.open() } } },
+            topBar = { 
+                if (showBars && currentDestination != "ia_chat") {
+                    TopBar(navController, currentDestination) { scope.launch { drawerState.open() } } 
+                }
+            },
             bottomBar = { if (showBars) BottomBar(navController) }
         ) { innerPadding ->
         AnimatedNavHost(
@@ -230,10 +243,9 @@ fun App(navController: NavHostController = rememberNavController()) {
             // Editar cultivo existente
             animComposable("editarCultivo/{cultivoId}") { backStackEntry ->
                 val cultivoId = backStackEntry.arguments?.getString("cultivoId")?.toIntOrNull() ?: 0
-                // TODO: Implementar pantalla de edición
-                ScreenCultivo(
+                EditarCultivoScreen(
                     navController = navController,
-                    userId = 1
+                    cultivoId = cultivoId
                 )
             }
 
@@ -264,6 +276,15 @@ fun App(navController: NavHostController = rememberNavController()) {
                     cultivoId = cultivoId
                 )
             }
+
+            // Lista global de actividades (todas las actividades de todos los cultivos)
+            animComposable("listaActividadesGlobal") {
+                ListaActividadesGlobalScreen(
+                    navController = navController,
+                    userId = 1 // TODO: Obtener desde login o SharedPreferences
+                )
+            }
+
 
             // ========== RUTAS GLOBALES (MANTENER) ==========
 
@@ -396,6 +417,7 @@ fun TopBar(navController: NavHostController, currentRoute: String?, onMenuClick:
         currentRoute == "ia_chat" -> "Asistente Agrícola"
         currentRoute == "inicio" -> "Bienvenido a AgroCode"
         currentRoute == "cultivo" -> "Gestión de Cultivos"
+        currentRoute == "listaActividadesGlobal" -> "Todas las Actividades"
         else -> "AgroCode"
     }
 
