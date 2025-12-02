@@ -1,6 +1,7 @@
 // Presentation/RegistroActividadScreen.kt
 package com.kaquenduri.prueba01_mqtt.Presentation
 
+import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -17,6 +18,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material3.*
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -41,7 +43,7 @@ fun RegistroActividadScreen(navController: NavController, cultivoId: Int) {
     val actividadDao = db.registroActividadDao()
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
-    val firestore = remember { FirebaseFirestore.getInstance() }
+    val firestore = FirebaseFirestore.getInstance()
 
     // Estados del formulario
     var fecha by remember { mutableStateOf("") }
@@ -51,15 +53,62 @@ fun RegistroActividadScreen(navController: NavController, cultivoId: Int) {
     var costo by remember { mutableStateOf("") }
     var jornales by remember { mutableStateOf("") }
     var materiales by remember { mutableStateOf("") }
-    
+    var actividadesFirebase by remember { mutableStateOf<List<RegistroActividad>>(emptyList()) }
+
     // Estado para mostrar confirmación
     var mostrarConfirmacion by remember { mutableStateOf(false) }
     var guardando by remember { mutableStateOf(false) }
+
+
 
     // Lista de actividades
     val listaActividades by actividadDao
         .obtenerActividadesPorCultivo(cultivoId)
         .collectAsState(initial = emptyList())
+
+    //Funcion para filtrar las actividades por cultivo y devolverlas
+    fun cargarActividadesFirebase() {
+        scope.launch {
+            try {
+                val snapshot = firestore.collection("Actividades")
+                    .whereEqualTo("cultivoId", cultivoId)
+                    .get()
+                    .await()
+
+                val lista = snapshot.documents.mapNotNull { doc ->
+                    val data = doc.data ?: return@mapNotNull null
+
+                    RegistroActividad(
+                        id = 0,
+                        cultivoId = (data["cultivoId"] as? Number)?.toInt() ?: 0,
+
+                        fecha = data["fecha"] as? String ?: "",
+                        tipoActividad = data["tipoActividad"] as? String ?: "",
+                        descripcion = data["descripcion"] as? String ?: "",
+                        productos = data["productosAplicados"] as? String ?: "",
+                        costo = (data["costo"] as? Number)?.toDouble() ?: 0.0,
+                        jornales = (data["jornales"] as? Number)?.toInt() ?: 0,
+                        materiales = data["materialesUtilizados"] as? String ?: ""
+                    )
+                }
+
+                actividadesFirebase = lista
+
+                Log.d("FIREBASE_ACTIVIDADES", "Total actividades cargadas: ${lista.size}")
+                Log.d("FIREBASE_ACTIVIDADES", "Contenido: $lista")
+
+            } catch (e: Exception) {
+                snackbarHostState.showSnackbar("Error al cargar actividades: ${e.message}")
+            }
+        }
+    }
+
+    //Cargar actividades
+    LaunchedEffect(Unit) {
+        cargarActividadesFirebase()
+
+    }
+
 
     // Función para guardar en Firestore y Room
     fun guardarActividad() {
@@ -69,7 +118,6 @@ fun RegistroActividadScreen(navController: NavController, cultivoId: Int) {
                 try {
                     val actividad = RegistroActividad(
                         cultivoId = cultivoId,
-                        idUsuario = 1,
                         fecha = fecha,
                         tipoActividad = tipoActividad,
                         descripcion = descripcion,
@@ -85,7 +133,6 @@ fun RegistroActividadScreen(navController: NavController, cultivoId: Int) {
                     // Guardar en Firestore
                     val actividadData = hashMapOf(
                         "cultivoId" to cultivoId,
-                        "idUsuario" to 1,
                         "fecha" to fecha,
                         "tipoActividad" to tipoActividad,
                         "descripcion" to descripcion,
@@ -125,6 +172,7 @@ fun RegistroActividadScreen(navController: NavController, cultivoId: Int) {
                     )
                 } finally {
                     guardando = false
+                    cargarActividadesFirebase()
                 }
             }
         } else {
@@ -133,6 +181,54 @@ fun RegistroActividadScreen(navController: NavController, cultivoId: Int) {
                     "Completa los campos obligatorios (Fecha y Tipo de Actividad)",
                     duration = SnackbarDuration.Short
                 )
+            }
+        }
+    }
+    @Composable
+    fun ModernInput(
+        value: String,
+        onValueChange: (String) -> Unit,
+        label: String,
+        modifier: Modifier = Modifier,
+        maxLines: Int = 1
+    ) {
+        OutlinedTextField(
+            value = value,
+            onValueChange = onValueChange,
+            label = { Text(label) },
+            modifier = modifier.fillMaxWidth(),
+            maxLines = maxLines,
+            shape = RoundedCornerShape(14.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant
+            )
+        )
+    }
+
+    @Composable
+    fun ActivityInfoRow(actividad: RegistroActividad) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(20.dp)
+        ) {
+            if (actividad.productos.isNotBlank()) {
+                Column {
+                    Text("🧪 Productos", style = MaterialTheme.typography.labelSmall)
+                    Text(actividad.productos, fontWeight = FontWeight.Medium)
+                }
+            }
+            if (actividad.costo > 0) {
+                Column {
+                    Text("💰 Costo", style = MaterialTheme.typography.labelSmall)
+                    Text("$${actividad.costo}", fontWeight = FontWeight.Medium)
+                }
+            }
+            if (actividad.jornales > 0) {
+                Column {
+                    Text("👥 Jornales", style = MaterialTheme.typography.labelSmall)
+                    Text("${actividad.jornales}", fontWeight = FontWeight.Medium)
+                }
             }
         }
     }
@@ -164,345 +260,208 @@ fun RegistroActividadScreen(navController: NavController, cultivoId: Int) {
         }
 
     ) { padding ->
-        Column(
+        LazyColumn(
             modifier = Modifier
                 .padding(padding)
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
+                .fillMaxSize(),
+            verticalArrangement = Arrangement.Top,
+            contentPadding = PaddingValues(bottom = 120.dp)
         ) {
-            // Tarjeta del formulario con animación
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                shape = RoundedCornerShape(16.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainer
-                )
-            ) {
-                Column(
-                    modifier = Modifier.padding(20.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+            // FORMULARIO
+            item {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    shape = RoundedCornerShape(20.dp),
+                    elevation = CardDefaults.cardElevation(6.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                    )
                 ) {
-                    // Título del formulario
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.fillMaxWidth()
+                    Column(
+                        modifier = Modifier.padding(22.dp),
+                        verticalArrangement = Arrangement.spacedBy(18.dp)
                     ) {
-                        Text(
-                            text = "Nueva Actividad",
-                            style = MaterialTheme.typography.headlineSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.weight(1f)
-                        )
-                        
-                        // Indicador de confirmación
-                        AnimatedVisibility(
-                            visible = mostrarConfirmacion,
-                            enter = fadeIn() + slideInVertically(),
-                            exit = fadeOut() + slideOutVertically()
+
+                        // Encabezado del formulario
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            Text(
+                                "Nueva Actividad",
+                                style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.ExtraBold),
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.weight(1f)
+                            )
+
+                            AnimatedVisibility(
+                                visible = mostrarConfirmacion,
+                                enter = fadeIn() + slideInVertically(),
+                                exit = fadeOut() + slideOutVertically()
                             ) {
-                                Icon(
-                                    Icons.Filled.CheckCircle,
-                                    contentDescription = null,
-                                    tint = Color(0xFF2E7D32),
-                                    modifier = Modifier.size(20.dp)
-                                )
-                                Text(
-                                    text = "Guardado",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = Color(0xFF2E7D32),
-                                    fontWeight = FontWeight.Bold
-                                )
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    Icon(
+                                        Icons.Filled.CheckCircle,
+                                        contentDescription = null,
+                                        tint = Color(0xFF2E7D32),
+                                        modifier = Modifier.size(22.dp)
+                                    )
+                                    Text(
+                                        "Guardado",
+                                        style = MaterialTheme.typography.labelLarge.copy(
+                                            color = Color(0xFF2E7D32),
+                                            fontWeight = FontWeight.SemiBold
+                                        )
+                                    )
+                                }
                             }
                         }
-                    }
-                    
-                    Divider()
-                    
-                    // Campos del formulario con espaciado mejorado
-                    OutlinedTextField(
-                        value = fecha,
-                        onValueChange = { fecha = it },
-                        label = { Text("Fecha (dd/mm/aaaa) *") },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        shape = RoundedCornerShape(12.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = MaterialTheme.colorScheme.primary,
-                            unfocusedBorderColor = MaterialTheme.colorScheme.outline
-                        )
-                    )
 
-                    OutlinedTextField(
-                        value = tipoActividad,
-                        onValueChange = { tipoActividad = it },
-                        label = { Text("Tipo de Actividad *") },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        shape = RoundedCornerShape(12.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = MaterialTheme.colorScheme.primary,
-                            unfocusedBorderColor = MaterialTheme.colorScheme.outline
+                        Divider(
+                            modifier = Modifier.padding(top = 6.dp),
+                            color = MaterialTheme.colorScheme.outlineVariant
                         )
-                    )
 
-                    OutlinedTextField(
-                        value = descripcion,
-                        onValueChange = { descripcion = it },
-                        label = { Text("Descripción") },
-                        modifier = Modifier.fillMaxWidth(),
-                        maxLines = 3,
-                        shape = RoundedCornerShape(12.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = MaterialTheme.colorScheme.primary,
-                            unfocusedBorderColor = MaterialTheme.colorScheme.outline
+                        // CAMPOS
+                        ModernInput(
+                            value = fecha,
+                            onValueChange = { fecha = it },
+                            label = "Fecha (dd/mm/aaaa) *"
                         )
-                    )
-
-                    OutlinedTextField(
-                        value = productos,
-                        onValueChange = { productos = it },
-                        label = { Text("Productos aplicados") },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        shape = RoundedCornerShape(12.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = MaterialTheme.colorScheme.primary,
-                            unfocusedBorderColor = MaterialTheme.colorScheme.outline
+                        ModernInput(
+                            value = tipoActividad,
+                            onValueChange = { tipoActividad = it },
+                            label = "Tipo de Actividad *"
                         )
-                    )
+                        ModernInput(
+                            value = descripcion,
+                            onValueChange = { descripcion = it },
+                            label = "Descripción",
+                            maxLines = 4
+                        )
+                        ModernInput(
+                            value = productos,
+                            onValueChange = { productos = it },
+                            label = "Productos aplicados"
+                        )
 
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        OutlinedTextField(
-                            value = costo,
-                            onValueChange = { costo = it },
-                            label = { Text("Costo") },
-                            modifier = Modifier.weight(1f),
-                            singleLine = true,
-                            shape = RoundedCornerShape(12.dp),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = MaterialTheme.colorScheme.primary,
-                                unfocusedBorderColor = MaterialTheme.colorScheme.outline
+                        Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                            ModernInput(
+                                value = costo,
+                                onValueChange = { costo = it },
+                                label = "Costo",
+                                modifier = Modifier.weight(1f)
                             )
-                        )
-
-                        OutlinedTextField(
-                            value = jornales,
-                            onValueChange = { jornales = it },
-                            label = { Text("Jornales") },
-                            modifier = Modifier.weight(1f),
-                            singleLine = true,
-                            shape = RoundedCornerShape(12.dp),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = MaterialTheme.colorScheme.primary,
-                                unfocusedBorderColor = MaterialTheme.colorScheme.outline
+                            ModernInput(
+                                value = jornales,
+                                onValueChange = { jornales = it },
+                                label = "Jornales",
+                                modifier = Modifier.weight(1f)
                             )
-                        )
-                    }
-
-                    OutlinedTextField(
-                        value = materiales,
-                        onValueChange = { materiales = it },
-                        label = { Text("Materiales utilizados") },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        shape = RoundedCornerShape(12.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = MaterialTheme.colorScheme.primary,
-                            unfocusedBorderColor = MaterialTheme.colorScheme.outline
-                        )
-                    )
-                    
-                    // Botón de guardar
-                    Button(
-                        onClick = { guardarActividad() },
-                        modifier = Modifier.fillMaxWidth(),
-                        enabled = !guardando && (fecha.isNotBlank() && tipoActividad.isNotBlank()),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        if (guardando) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(20.dp),
-                                color = Color.White,
-                                strokeWidth = 2.dp
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
                         }
-                        Text("Guardar Actividad")
+
+                        ModernInput(
+                            value = materiales,
+                            onValueChange = { materiales = it },
+                            label = "Materiales utilizados"
+                        )
+
+                        Button(
+                            onClick = { guardarActividad() },
+                            modifier = Modifier.fillMaxWidth(),
+                            enabled = !guardando && fecha.isNotBlank() && tipoActividad.isNotBlank(),
+                            shape = RoundedCornerShape(14.dp)
+                        ) {
+                            if (guardando) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(20.dp),
+                                    color = Color.White,
+                                    strokeWidth = 2.dp
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                            }
+                            Text("Guardar Actividad", fontWeight = FontWeight.Bold)
+                        }
                     }
+                }
+
+                if (actividadesFirebase.isNotEmpty()) {
+                    Text(
+                        text = "Actividades Registradas",
+                        style = MaterialTheme.typography.titleLarge.copy(
+                            fontWeight = FontWeight.Bold
+                        ),
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(start = 20.dp, top = 4.dp, bottom = 10.dp)
+                    )
                 }
             }
 
-            // Lista de actividades existentes con mejor diseño
-            if (listaActividades.isNotEmpty()) {
-                Text(
-                    text = "Actividades Registradas",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                    color = MaterialTheme.colorScheme.primary
-                )
-            }
+            // LISTA DE ACTIVIDADES
+            items(
+                items = actividadesFirebase,
+                key = { it.hashCode() }
+            ) { actividad ->
 
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f),
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                items(
-                    items = listaActividades,
-                    key = { it.id }
-                ) { actividad ->
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surface
-                        )
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 6.dp),
+                    shape = RoundedCornerShape(18.dp),
+                    elevation = CardDefaults.cardElevation(3.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surface
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier.padding(18.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        Column(
-                            modifier = Modifier.padding(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.Top
-                            ) {
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(
-                                        text = "📅 ${actividad.fecha}",
-                                        style = MaterialTheme.typography.titleMedium,
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    "📅 ${actividad.fecha}",
+                                    style = MaterialTheme.typography.titleMedium.copy(
                                         fontWeight = FontWeight.Bold
                                     )
-                                    Text(
-                                        text = "🔧 ${actividad.tipoActividad}",
-                                        style = MaterialTheme.typography.bodyMedium,
+                                )
+                                Text(
+                                    "🔧 ${actividad.tipoActividad}",
+                                    style = MaterialTheme.typography.bodyMedium.copy(
                                         color = MaterialTheme.colorScheme.primary
                                     )
-                                }
-                                
-                                IconButton(
-                                    onClick = {
-                                        scope.launch {
-                                            try {
-                                                // Eliminar de Room
-                                                actividadDao.eliminarActividadPorId(actividad.id)
-                                                
-                                                // Eliminar de Firestore (opcional, si tienes el ID del documento)
-                                                snackbarHostState.showSnackbar(
-                                                    "Actividad eliminada",
-                                                    duration = SnackbarDuration.Short
-                                                )
-                                            } catch (e: Exception) {
-                                                snackbarHostState.showSnackbar(
-                                                    "Error al eliminar: ${e.message}",
-                                                    duration = SnackbarDuration.Short
-                                                )
-                                            }
-                                        }
-                                    }
-                                ) {
-                                    Icon(
-                                        Icons.Filled.Delete,
-                                        contentDescription = "Eliminar",
-                                        tint = MaterialTheme.colorScheme.error
-                                    )
-                                }
-                            }
-                            
-                            if (actividad.descripcion.isNotBlank()) {
-                                Text(
-                                    text = actividad.descripcion,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
 
-                            if (actividad.productos.isNotBlank() || actividad.costo > 0 || actividad.jornales > 0) {
-                                Divider(modifier = Modifier.padding(vertical = 4.dp))
-                            }
-
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(16.dp)
-                            ) {
-                                if (actividad.productos.isNotBlank()) {
-                                    Column {
-                                        Text(
-                                            text = "🧪 Productos",
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
-                                        Text(
-                                            text = actividad.productos,
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            fontWeight = FontWeight.Medium
-                                        )
-                                    }
-                                }
-
-                                if (actividad.costo > 0) {
-                                    Column {
-                                        Text(
-                                            text = "💰 Costo",
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
-                                        Text(
-                                            text = "$${actividad.costo}",
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            fontWeight = FontWeight.Medium
-                                        )
-                                    }
-                                }
-
-                                if (actividad.jornales > 0) {
-                                    Column {
-                                        Text(
-                                            text = "👥 Jornales",
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
-                                        Text(
-                                            text = "${actividad.jornales}",
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            fontWeight = FontWeight.Medium
-                                        )
-                                    }
-                                }
-                            }
                             
-                            if (actividad.materiales.isNotBlank()) {
-                                Column {
-                                    Text(
-                                        text = "🔨 Materiales",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                    Text(
-                                        text = actividad.materiales,
-                                        style = MaterialTheme.typography.bodyMedium
-                                    )
-                                }
-                            }
                         }
+
+                        actividad.descripcion.takeIf { it.isNotBlank() }?.let {
+                            Text(
+                                it,
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            )
+                        }
+
+                        Divider(color = MaterialTheme.colorScheme.outlineVariant)
+
+                        ActivityInfoRow(actividad)
                     }
                 }
             }
         }
+
+
     }
 }

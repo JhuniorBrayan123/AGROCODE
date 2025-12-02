@@ -23,7 +23,7 @@ import com.kaquenduri.prueba01_mqtt.models.entities.ChatEntry
         RegistroActividad::class,
         ChatEntry::class
     ],
-    version = 6,
+    version = 14,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {

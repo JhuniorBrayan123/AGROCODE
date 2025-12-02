@@ -19,10 +19,6 @@ class RegistroActividadRepository(private val registroActividadDao: RegistroActi
         registroActividadDao.actualizarActividad(actividad)
     }
 
-    suspend fun eliminarActividadPorId(id: Int) {
-        registroActividadDao.eliminarActividadPorId(id)
-    }
-
     suspend fun eliminarActividadesPorCultivo(cultivoId: Int) {
         registroActividadDao.eliminarActividadesPorCultivo(cultivoId)
     }
